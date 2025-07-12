@@ -1,23 +1,22 @@
-'use client'
+import UserTable from '@/components/ui/usertable'
+import { createClient } from '@supabase/supabase-js'
 
-import { useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-export default function UsersPage() {
-  const router = useRouter()
-  const pathname = usePathname()
+export default async function UsersPage() {
+  const { data: users, error } = await supabase.from('users').select('*')
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession()
-      if (!data.session) {
-        router.push(`/login?redirect=${pathname}`)
-      }
-    }
+  if (error) {
+    return <p className="text-red-600">Failed to fetch users: {error.message}</p>
+  }
 
-    checkSession()
-  }, [pathname, router])
-
-  return <div>Protected /users page</div>
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6 text-blue-700">User Directory</h1>
+      <UserTable users={users} />
+    </div>
+  )
 }
